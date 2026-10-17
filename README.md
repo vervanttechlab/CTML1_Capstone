@@ -10,8 +10,10 @@ builds a small monitored Windows lab, connects it to the **Wazuh** SIEM, investi
 
 ## 📖 Read the guide
 
-- **Web guide (sidebar navigator):** open **[`index.html`](index.html)** — or the published
-  **GitHub Pages** site once enabled: `https://vervanttechlab.github.io/CTML1_Capstone/`
+### 🌐 **Live web guide → <https://vervanttechlab.github.io/CTML1_Capstone/>**
+
+- **Web guide (sidebar navigator):** the published GitHub Pages site above, or open
+  [`index.html`](index.html) locally.
 - **Printable guide:** [`CAPSTONE_RESOURCES/01_Guide/Capstone_Guide_CTM_L1.pdf`](CAPSTONE_RESOURCES/01_Guide/Capstone_Guide_CTM_L1.pdf)
 - **Quick start:** [`CAPSTONE_RESOURCES/00_START_HERE.md`](CAPSTONE_RESOURCES/00_START_HERE.md)
 
@@ -23,10 +25,13 @@ builds a small monitored Windows lab, connects it to the **Wazuh** SIEM, investi
 | `02_Lab_Setup` | 1 | Download links, network plan, `Preflight_Check.ps1` |
 | `03_Windows_Logging` | 2 | Seed / audit / Sysmon scripts + config, Event Viewer custom views, Event ID cheat sheet |
 | `04_Wazuh` | 3 | Agent installer, ossec additions, `local_rules.xml`, dashboard queries |
-| `05_Attack_Simulation` | 4 | Scenario brief, `Run_Scenario.ps1`, `Cleanup_Scenario.ps1` |
-| `06_Backup_Dataset` | 4 (Plan B) | `Security_Events.csv`, `Sysmon_Events.csv`, `Wazuh_Alerts.json` |
+| `05_Attack_Simulation` | 4 | Scenario brief (the attack/cleanup scripts and the Plan-B dataset are instructor-provided) |
 | `07_Team_Templates` | All | Charter, stand-up log, triage tracker, worksheet, report, presentation |
 | `08_Assessment` | 5 | Grading rubric, peer evaluation |
+
+> **Instructors:** the attack simulation (`Run_Scenario.ps1`), its cleanup, and the Plan-B
+> backup dataset are **not** in this public repo so students investigate blind. Ask the course
+> owner for the instructor pack.
 
 ## 🗓️ The five days
 

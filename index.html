@@ -479,19 +479,17 @@ restart, check <code>sudo tail -n 50 /var/ossec/logs/ossec.log</code> for rule e
 attack timeline and all alerts triaged.</p>
 
 <h2>4.1 Run the scenario (Red Cell only)</h2>
-<div class="lg file">FILE</div>
-<p><span class="file">05_Attack_Simulation / Run_Scenario.ps1</span></p>
-<div class="box warn">Only the <b>Lab Engineer (Red Cell)</b> or the instructor runs this,
-inside the Windows VM, as Administrator. They do <b>not</b> read the script or share its
-output. Everyone else investigates blind, like a real SOC. First take a snapshot named
-<b>Day4-Before-Attack</b>.</div>
-<p class="do">DO THIS (Red Cell): <code>.\Run_Scenario.ps1</code> - it takes about 6 minutes
-and prints only "Stage X of 8 complete". Then wait 2-3 minutes for Wazuh to index events.</p>
+<div class="box warn">The attack is launched by a script (<code>Run_Scenario.ps1</code>) that your
+<b>instructor provides to the Red Cell</b> (the Lab Engineer). It is deliberately NOT in the
+student pack, so the rest of the team investigates blind, like a real SOC. The Red Cell runs
+it inside the Windows VM as Administrator, does <b>not</b> read it, and does <b>not</b> share
+its output. First take a snapshot named <b>Day4-Before-Attack</b>.</div>
+<p class="do">DO THIS (Red Cell): run the script your instructor provided. It takes about 6
+minutes and prints only "Stage X of 8 complete". Then wait 2-3 minutes for Wazuh to index events.</p>
 
 <div class="box"><b>Plan B.</b> If your live lab is broken (agent never connected, a VM died),
-use <span class="file">06_Backup_Dataset\</span> instead. It contains the exact same incident
-as CSV and JSON files you can open in Excel and a text editor. Your investigation and report
-are identical.</div>
+ask your instructor for the <b>backup dataset</b> - the same incident exported as CSV and JSON
+files you can open in Excel and a text editor. Your investigation and report are identical.</div>
 
 <h2>4.2 How to investigate (the SOC method)</h2>
 <p>Work this loop for every alert. Record everything in
@@ -545,9 +543,8 @@ strong was j.santos's password, and what rights did the account have?) and at le
 prioritised recommendations</b>.</p>
 
 <h2>5.2 Clean up and recover</h2>
-<div class="lg file">FILE</div>
-<p><span class="file">05_Attack_Simulation / Cleanup_Scenario.ps1</span></p>
-<p>After all evidence is collected, the Red Cell runs this to remove the backdoor account,
+<p>After all evidence is collected, the Red Cell runs the <b>cleanup script your instructor
+provided</b> (<code>Cleanup_Scenario.ps1</code>) to remove the backdoor account,
 scheduled task, Run key and dropped files, and to restore the finance data. In your report,
 describe this as your <b>containment, eradication and recovery</b>. (A real team would also
 reset the weak password and remove unnecessary admin rights - list that too.)</p>
@@ -605,8 +602,8 @@ the right <code>-Version</code>.</td></tr>
 <code>Install_Sysmon.ps1</code>.</td></tr>
 <tr><td>Dashboard won't load</td><td>Give the Wazuh VM more RAM (8 GB). Wait 2-3 minutes after
 boot. Use <code>https://</code> and accept the certificate.</td></tr>
-<tr><td>Live lab broke on Day 4</td><td>Switch to <span class="file">06_Backup_Dataset</span>
-and continue the investigation from the files.</td></tr>
+<tr><td>Live lab broke on Day 4</td><td>Ask your instructor for the backup dataset and continue
+the investigation from the files.</td></tr>
 </table>
 <p>Still stuck after 15 minutes? Post in your team channel with a screenshot of the error and
 what you already tried.</p>
@@ -635,8 +632,7 @@ what you already tried.</p>
 <tr><td>02_Lab_Setup</td><td>Day 1</td><td>Download links, network plan, Preflight_Check.ps1</td></tr>
 <tr><td>03_Windows_Logging</td><td>Day 2</td><td>Seed, audit, Sysmon scripts + config, custom views, cheat sheet</td></tr>
 <tr><td>04_Wazuh</td><td>Day 3</td><td>Agent installer, ossec additions, local_rules.xml, dashboard queries</td></tr>
-<tr><td>05_Attack_Simulation</td><td>Day 4</td><td>Scenario brief, Run_Scenario.ps1, Cleanup_Scenario.ps1</td></tr>
-<tr><td>06_Backup_Dataset</td><td>Day 4 (Plan B)</td><td>Security/Sysmon CSV, Wazuh alerts JSON</td></tr>
+<tr><td>05_Attack_Simulation</td><td>Day 4</td><td>Scenario brief (attack &amp; cleanup scripts are provided by your instructor)</td></tr>
 <tr><td>07_Team_Templates</td><td>All</td><td>Charter, stand-ups, triage tracker, worksheet, report, presentation</td></tr>
 <tr><td>08_Assessment</td><td>Day 5</td><td>Grading rubric, peer evaluation</td></tr>
 </table>

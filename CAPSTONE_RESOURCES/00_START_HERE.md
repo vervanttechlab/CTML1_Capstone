@@ -28,8 +28,7 @@ Upload the whole folder (or `CAPSTONE_RESOURCES.zip`) to your team's shared driv
 | **02_Lab_Setup** | 1 | `Download_Links.md`, `Lab_Network_Plan.md`, `Preflight_Check.ps1` |
 | **03_Windows_Logging** | 2 | Seed / audit / Sysmon scripts + config, Event Viewer custom views, Event ID cheat sheet |
 | **04_Wazuh** | 3 | Agent installer, ossec additions, `local_rules.xml`, dashboard queries |
-| **05_Attack_Simulation** | 4 | `Scenario_Brief.md`, `Run_Scenario.ps1`, `Cleanup_Scenario.ps1` |
-| **06_Backup_Dataset** | 4 (Plan B) | `Security_Events.csv`, `Sysmon_Events.csv`, `Wazuh_Alerts.json` |
+| **05_Attack_Simulation** | 4 | `Scenario_Brief.md` — the attack & cleanup scripts, and the Plan-B backup dataset, are provided by your **instructor** (kept out of the student pack so the hunt stays blind) |
 | **07_Team_Templates** | All | Charter, stand-up log, triage tracker, worksheet, report, presentation |
 | **08_Assessment** | 5 | Grading rubric, peer evaluation |
 
