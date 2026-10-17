@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CTM Level 1 Capstone — Operation Night Ledger</title>
 <meta name="description" content="A five-day guided blue-team capstone: VirtualBox, Windows Event Viewer, Sysmon and Wazuh.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
   --navy:#1a365d; --blue:#2b6cb0; --blue2:#3a7bd5;
@@ -12,7 +15,7 @@
   --text:#23292f; --muted:#5a6572; --line:#d9e0ea; --card:#ffffff;
   --green:#2e8b57; --greenbg:#eaf7ee; --redbg:#fdecea; --red:#d9534f;
   --amber:#d79a00; --amberbg:#fff7e6; --filebg:#fbf0df; --filetx:#7a3e00;
-  --codebg:#eef1f4; --codetx:#11306b;
+  --codebg:#eef1f4; --codetx:#11306b; --boxbg:#eaf1fb;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
@@ -21,7 +24,7 @@
     --navy:#8fb4e6; --blue:#79a8e6; --blue2:#9cc1f5;
     --green:#53c08a; --greenbg:#132a1f; --redbg:#2c1715; --red:#e7857f;
     --amber:#e6b53c; --amberbg:#2a2310; --filebg:#2a2113; --filetx:#e3b784;
-    --codebg:#1b2636; --codetx:#9cc1f5;
+    --codebg:#1b2636; --codetx:#9cc1f5; --boxbg:#13233c;
   }
 }
 :root[data-theme="dark"]{
@@ -30,12 +33,13 @@
   --navy:#8fb4e6; --blue:#79a8e6; --blue2:#9cc1f5;
   --green:#53c08a; --greenbg:#132a1f; --redbg:#2c1715; --red:#e7857f;
   --amber:#e6b53c; --amberbg:#2a2310; --filebg:#2a2113; --filetx:#e3b784;
-  --codebg:#1b2636; --codetx:#9cc1f5;
+  --codebg:#1b2636; --codetx:#9cc1f5; --boxbg:#13233c;
 }
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;}
-body{font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-  background:var(--bg);color:var(--text);line-height:1.6;font-size:16px;}
+body{font-family:'IBM Plex Sans',-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  background:var(--bg);color:var(--text);line-height:1.6;font-size:16px;
+  -webkit-font-smoothing:antialiased;}
 a{color:var(--blue);}
 /* layout */
 .layout{display:flex;min-height:100vh;}
@@ -67,26 +71,24 @@ nav ul{list-style:none;margin:0;padding:10px 0 24px;}
 .doc-section{display:none;animation:fade .2s ease;}
 .doc-section.active{display:block;}
 @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
-h1{font-size:27px;color:var(--navy);border-bottom:2px solid var(--blue);
-  padding-bottom:8px;margin:0 0 16px;}
-h2{font-size:19px;color:var(--blue);margin:26px 0 8px;}
+h1{font-size:28px;font-weight:700;letter-spacing:-.01em;color:var(--navy);
+  border-bottom:2px solid var(--blue);padding-bottom:10px;margin:0 0 18px;}
+h2{font-size:19px;font-weight:600;letter-spacing:-.005em;color:var(--blue);margin:28px 0 8px;}
 p{margin:10px 0;}
 ul,ol{margin:10px 0;padding-left:24px;}
 li{margin:5px 0;}
 b{color:var(--navy);}
-code{font-family:Consolas,Menlo,monospace;font-size:13.5px;background:var(--codebg);
+code{font-family:'IBM Plex Mono',Consolas,Menlo,monospace;font-size:13.5px;background:var(--codebg);
   color:var(--codetx);padding:1px 5px;border-radius:4px;}
 table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14px;}
 th{background:var(--navy);color:#fff;text-align:left;padding:8px 10px;border:1px solid var(--navy);}
 td{border:1px solid var(--line);padding:7px 10px;vertical-align:top;background:var(--card);}
 tr:nth-child(even) td{background:var(--bg2);}
-.box{padding:12px 15px;margin:14px 0;background:#eef4fb;border-left:4px solid var(--blue);border-radius:0 8px 8px 0;}
+.box{padding:12px 15px;margin:14px 0;background:var(--boxbg);border-left:4px solid var(--blue);border-radius:0 8px 8px 0;}
 .tip{background:var(--greenbg);border-left-color:var(--green);}
 .warn{background:var(--redbg);border-left-color:var(--red);}
 .check-list{background:var(--amberbg);border-left-color:var(--amber);
-  font-family:Consolas,Menlo,monospace;font-size:13.5px;white-space:normal;}
-:root[data-theme="dark"] .box, :root:not([data-theme="light"]) .box{background:#13233c;}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .box{background:#13233c;}}
+  font-family:'IBM Plex Mono',Consolas,Menlo,monospace;font-size:13.5px;white-space:normal;}
 .do,.chk{color:#fff;font-weight:700;padding:5px 12px;margin:14px 0 2px;
   display:inline-block;border-radius:6px;font-size:13px;letter-spacing:.02em;}
 .do{background:var(--green);}
@@ -94,7 +96,7 @@ tr:nth-child(even) td{background:var(--bg2);}
 /* keep text readable on dark/colored bars and table headers */
 .do b,.chk b,.do code,.chk code,th b,th code{color:#fff;}
 .do code,.chk code,th code{background:rgba(255,255,255,.18);}
-.file{font-family:Consolas,Menlo,monospace;font-size:13px;color:var(--filetx);
+.file{font-family:'IBM Plex Mono',Consolas,Menlo,monospace;font-size:13px;color:var(--filetx);
   background:var(--filebg);padding:2px 6px;border-radius:4px;}
 table.legend th{display:none;}
 .lg{font-weight:700;color:#fff;text-align:center;font-size:12px;width:92px;border-radius:0;}
