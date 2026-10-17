@@ -1,0 +1,15 @@
+<ViewerConfig>
+  <QueryConfig>
+    <QueryParams>
+      <UserQuery />
+    </QueryParams>
+    <QueryNode>
+      <Name>CTM - 4 PowerShell and Defender</Name>
+      <Description>PowerShell script blocks (4104) and Microsoft Defender detections (1116, 1117)</Description>
+      <QueryList>
+        <Query Id="0" Path="Microsoft-Windows-PowerShell/Operational"><Select Path="Microsoft-Windows-PowerShell/Operational">*[System[(EventID=4104)]]</Select></Query>
+        <Query Id="1" Path="Microsoft-Windows-Windows Defender/Operational"><Select Path="Microsoft-Windows-Windows Defender/Operational">*[System[(EventID=1116 or EventID=1117)]]</Select></Query>
+      </QueryList>
+    </QueryNode>
+  </QueryConfig>
+</ViewerConfig>

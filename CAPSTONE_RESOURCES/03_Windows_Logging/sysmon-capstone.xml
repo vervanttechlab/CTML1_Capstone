@@ -1,0 +1,79 @@
+<!--
+  CTM Level 1 Capstone - Sysmon configuration (training)
+  Goal: readable, low-noise telemetry for a single lab workstation.
+  Install:  Sysmon64.exe -accepteula -i sysmon-capstone.xml
+  Update:   Sysmon64.exe -c sysmon-capstone.xml
+-->
+<Sysmon schemaversion="4.90">
+  <HashAlgorithms>sha256</HashAlgorithms>
+  <CheckRevocation/>
+  <EventFiltering>
+
+    <!-- Event 1: Process creation - log everything except very noisy system binaries -->
+    <RuleGroup name="ProcessCreate" groupRelation="or">
+      <ProcessCreate onmatch="exclude">
+        <Image condition="is">C:\Windows\System32\conhost.exe</Image>
+        <Image condition="is">C:\Windows\System32\backgroundTaskHost.exe</Image>
+        <Image condition="is">C:\Windows\System32\RuntimeBroker.exe</Image>
+        <Image condition="is">C:\Windows\System32\SearchProtocolHost.exe</Image>
+        <Image condition="is">C:\Windows\System32\SearchFilterHost.exe</Image>
+        <Image condition="begin with">C:\Program Files (x86)\ossec-agent\</Image>
+      </ProcessCreate>
+    </RuleGroup>
+
+    <!-- Event 3: Network connection - only from tools attackers like to use -->
+    <RuleGroup name="NetworkConnect" groupRelation="or">
+      <NetworkConnect onmatch="include">
+        <Image condition="end with">\powershell.exe</Image>
+        <Image condition="end with">\pwsh.exe</Image>
+        <Image condition="end with">\cmd.exe</Image>
+        <Image condition="end with">\rundll32.exe</Image>
+        <Image condition="end with">\regsvr32.exe</Image>
+        <Image condition="end with">\mshta.exe</Image>
+        <Image condition="end with">\certutil.exe</Image>
+        <Image condition="end with">\bitsadmin.exe</Image>
+      </NetworkConnect>
+    </RuleGroup>
+
+    <!-- Event 11: File create - risky locations and file types -->
+    <RuleGroup name="FileCreate" groupRelation="or">
+      <FileCreate onmatch="include">
+        <TargetFilename condition="contains">\Downloads\</TargetFilename>
+        <TargetFilename condition="contains">\AppData\Local\Temp\</TargetFilename>
+        <TargetFilename condition="begin with">C:\ProgramData\</TargetFilename>
+        <TargetFilename condition="begin with">C:\Users\Public\</TargetFilename>
+        <TargetFilename condition="begin with">C:\CapstoneFinance\</TargetFilename>
+        <TargetFilename condition="end with">.ps1</TargetFilename>
+        <TargetFilename condition="end with">.zip</TargetFilename>
+        <TargetFilename condition="end with">.bat</TargetFilename>
+      </FileCreate>
+    </RuleGroup>
+
+    <!-- Events 12/13/14: Registry - autostart (persistence) locations -->
+    <RuleGroup name="Registry" groupRelation="or">
+      <RegistryEvent onmatch="include">
+        <TargetObject condition="contains">\CurrentVersion\Run</TargetObject>
+        <TargetObject condition="contains">\CurrentVersion\RunOnce</TargetObject>
+        <TargetObject condition="contains">\CurrentControlSet\Services\</TargetObject>
+        <TargetObject condition="contains">\Winlogon\</TargetObject>
+      </RegistryEvent>
+    </RuleGroup>
+
+    <!-- Event 22: DNS query - only from scripting tools -->
+    <RuleGroup name="DnsQuery" groupRelation="or">
+      <DnsQuery onmatch="include">
+        <Image condition="end with">\powershell.exe</Image>
+        <Image condition="end with">\pwsh.exe</Image>
+        <Image condition="end with">\cmd.exe</Image>
+      </DnsQuery>
+    </RuleGroup>
+
+    <!-- Event 23/26: File delete - business data folder -->
+    <RuleGroup name="FileDelete" groupRelation="or">
+      <FileDeleteDetected onmatch="include">
+        <TargetFilename condition="begin with">C:\CapstoneFinance\</TargetFilename>
+      </FileDeleteDetected>
+    </RuleGroup>
+
+  </EventFiltering>
+</Sysmon>

@@ -1,0 +1,35 @@
+<!--
+  REFERENCE COPY - Install_Wazuh_Agent.ps1 adds this automatically.
+  Manual method: open Notepad AS ADMINISTRATOR, open
+     C:\Program Files (x86)\ossec-agent\ossec.conf
+  paste this block at the very END of the file, save, then run:
+     Restart-Service WazuhSvc
+
+  Alternative (central management): Wazuh dashboard > Agents management >
+  Groups > default > Files > agent.conf  - paste only the INNER part
+  (<localfile> and <syscheck> blocks) inside <agent_config> ... </agent_config>.
+-->
+<ossec_config>
+  <!-- Sysmon: process, network, file, registry, DNS events -->
+  <localfile>
+    <location>Microsoft-Windows-Sysmon/Operational</location>
+    <log_format>eventchannel</log_format>
+  </localfile>
+
+  <!-- PowerShell script block logging (4104) -->
+  <localfile>
+    <location>Microsoft-Windows-PowerShell/Operational</location>
+    <log_format>eventchannel</log_format>
+  </localfile>
+
+  <!-- Microsoft Defender detections (1116/1117) -->
+  <localfile>
+    <location>Microsoft-Windows-Windows Defender/Operational</location>
+    <log_format>eventchannel</log_format>
+  </localfile>
+
+  <!-- File Integrity Monitoring on the business data folder -->
+  <syscheck>
+    <directories check_all="yes" realtime="yes" report_changes="yes">C:\CapstoneFinance</directories>
+  </syscheck>
+</ossec_config>

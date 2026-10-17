@@ -1,0 +1,125 @@
+<!--
+  CTM Level 1 Capstone - Custom Wazuh rules (Day 3)
+
+  WHERE: Wazuh dashboard > menu > Server management > Rules >
+         "Manage rules files" > Custom rules > local_rules.xml (edit)
+         (or on the server: /var/ossec/etc/rules/local_rules.xml)
+
+  HOW:   Keep anything already in the file. Paste this whole block
+         BELOW it, click Save, then "Restart" the manager when asked
+         (or on the server:  sudo systemctl restart wazuh-manager).
+
+  TEST:  Server management > Ruleset Test (or /var/ossec/bin/wazuh-logtest)
+
+  Rule IDs 100200-100299 are reserved for this capstone.
+  Levels: 0-4 info, 5-7 low, 8-11 medium, 12-15 high/critical.
+-->
+<group name="ctm_capstone,windows,">
+
+  <!-- ===== AUTHENTICATION ===== -->
+  <rule id="100200" level="5">
+    <if_group>windows</if_group>
+    <field name="win.system.eventID">^4625$</field>
+    <description>CTM: Failed logon for user $(win.eventdata.targetUserName)</description>
+    <mitre><id>T1110</id></mitre>
+    <group>ctm_auth,authentication_failed,</group>
+  </rule>
+
+  <rule id="100201" level="10" frequency="6" timeframe="120">
+    <if_matched_sid>100200</if_matched_sid>
+    <same_field>win.eventdata.targetUserName</same_field>
+    <description>CTM: Possible brute force - 6+ failed logons for $(win.eventdata.targetUserName) in 2 minutes</description>
+    <mitre><id>T1110.001</id></mitre>
+    <group>ctm_auth,brute_force,</group>
+  </rule>
+
+  <!-- ===== ACCOUNT MANIPULATION ===== -->
+  <rule id="100202" level="8">
+    <if_group>windows</if_group>
+    <field name="win.system.eventID">^4720$</field>
+    <description>CTM: New local user created - $(win.eventdata.targetUserName)</description>
+    <mitre><id>T1136.001</id></mitre>
+    <group>ctm_account,</group>
+  </rule>
+
+  <rule id="100203" level="12">
+    <if_group>windows</if_group>
+    <field name="win.system.eventID">^4732$</field>
+    <field name="win.eventdata.targetUserName">^Administrators$</field>
+    <description>CTM: Account added to local Administrators group</description>
+    <mitre><id>T1098</id></mitre>
+    <group>ctm_account,privilege_escalation,</group>
+  </rule>
+
+  <!-- ===== PERSISTENCE ===== -->
+  <rule id="100204" level="10">
+    <if_group>windows</if_group>
+    <field name="win.system.eventID">^4698$</field>
+    <description>CTM: Scheduled task created - $(win.eventdata.taskName)</description>
+    <mitre><id>T1053.005</id></mitre>
+    <group>ctm_persistence,</group>
+  </rule>
+
+  <rule id="100207" level="10">
+    <if_group>windows</if_group>
+    <field name="win.system.eventID">^13$</field>
+    <field name="win.system.providerName">Sysmon</field>
+    <field name="win.eventdata.targetObject" type="pcre2">(?i)\\CurrentVersion\\Run</field>
+    <description>CTM: Registry Run key set - $(win.eventdata.targetObject)</description>
+    <mitre><id>T1547.001</id></mitre>
+    <group>ctm_persistence,</group>
+  </rule>
+
+  <!-- ===== EXECUTION ===== -->
+  <rule id="100205" level="12">
+    <if_group>windows</if_group>
+    <field name="win.system.eventID">^1$</field>
+    <field name="win.system.providerName">Sysmon</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)\s-e(nc|ncodedcommand)?\s+[A-Za-z0-9+/=]{20,}</field>
+    <description>CTM: Encoded PowerShell command executed</description>
+    <mitre><id>T1059.001</id><id>T1027</id></mitre>
+    <group>ctm_execution,</group>
+  </rule>
+
+  <rule id="100206" level="6">
+    <if_group>windows</if_group>
+    <field name="win.system.eventID">^1$</field>
+    <field name="win.system.providerName">Sysmon</field>
+    <field name="win.eventdata.image" type="pcre2">(?i)\\(whoami|net1?|systeminfo|ipconfig|nltest|quser)\.exe$</field>
+    <description>CTM: Discovery command - $(win.eventdata.commandLine)</description>
+    <mitre><id>T1087.001</id><id>T1082</id><id>T1016</id></mitre>
+    <group>ctm_discovery,</group>
+  </rule>
+
+  <!-- ===== COLLECTION ===== -->
+  <rule id="100210" level="7">
+    <if_group>windows</if_group>
+    <field name="win.system.eventID">^11$</field>
+    <field name="win.system.providerName">Sysmon</field>
+    <field name="win.eventdata.targetFilename" type="pcre2">(?i)\\ProgramData\\.*\.zip$</field>
+    <description>CTM: Archive created in ProgramData - $(win.eventdata.targetFilename)</description>
+    <mitre><id>T1560.001</id></mitre>
+    <group>ctm_collection,</group>
+  </rule>
+
+  <!-- ===== MALWARE (Defender) ===== -->
+  <rule id="100209" level="12">
+    <if_group>windows</if_group>
+    <field name="win.system.eventID">^1116$|^1117$</field>
+    <field name="win.system.providerName">Defender</field>
+    <description>CTM: Microsoft Defender malware detection / action</description>
+    <group>ctm_malware,</group>
+  </rule>
+
+</group>
+
+<!-- ===== FILE INTEGRITY MONITORING (business data) ===== -->
+<group name="ctm_capstone,syscheck,">
+  <rule id="100208" level="10">
+    <if_group>syscheck</if_group>
+    <regex type="pcre2">(?i)capstonefinance</regex>
+    <description>CTM: Sensitive file in C:\CapstoneFinance changed (FIM)</description>
+    <mitre><id>T1565.001</id></mitre>
+    <group>ctm_fim,</group>
+  </rule>
+</group>

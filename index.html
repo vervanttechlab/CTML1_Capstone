@@ -1,0 +1,692 @@
+<!doctype html>
+<html lang="en" data-theme="auto">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CTM Level 1 Capstone — Operation Night Ledger</title>
+<meta name="description" content="A five-day guided blue-team capstone: VirtualBox, Windows Event Viewer, Sysmon and Wazuh.">
+<style>
+:root{
+  --navy:#1a365d; --blue:#2b6cb0; --blue2:#3a7bd5;
+  --bg:#ffffff; --bg2:#f4f7fb; --sidebar:#13233f; --sidebar2:#1c3356;
+  --text:#23292f; --muted:#5a6572; --line:#d9e0ea; --card:#ffffff;
+  --green:#2e8b57; --greenbg:#eaf7ee; --redbg:#fdecea; --red:#d9534f;
+  --amber:#d79a00; --amberbg:#fff7e6; --filebg:#fbf0df; --filetx:#7a3e00;
+  --codebg:#eef1f4; --codetx:#11306b;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f1621; --bg2:#151f2e; --sidebar:#0b1420; --sidebar2:#152338;
+    --text:#dce3ec; --muted:#9aa7b6; --line:#28394f; --card:#131d2b;
+    --navy:#8fb4e6; --blue:#79a8e6; --blue2:#9cc1f5;
+    --green:#53c08a; --greenbg:#132a1f; --redbg:#2c1715; --red:#e7857f;
+    --amber:#e6b53c; --amberbg:#2a2310; --filebg:#2a2113; --filetx:#e3b784;
+    --codebg:#1b2636; --codetx:#9cc1f5;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f1621; --bg2:#151f2e; --sidebar:#0b1420; --sidebar2:#152338;
+  --text:#dce3ec; --muted:#9aa7b6; --line:#28394f; --card:#131d2b;
+  --navy:#8fb4e6; --blue:#79a8e6; --blue2:#9cc1f5;
+  --green:#53c08a; --greenbg:#132a1f; --redbg:#2c1715; --red:#e7857f;
+  --amber:#e6b53c; --amberbg:#2a2310; --filebg:#2a2113; --filetx:#e3b784;
+  --codebg:#1b2636; --codetx:#9cc1f5;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  background:var(--bg);color:var(--text);line-height:1.6;font-size:16px;}
+a{color:var(--blue);}
+/* layout */
+.layout{display:flex;min-height:100vh;}
+.sidebar{width:300px;flex:0 0 300px;background:var(--sidebar);color:#cdd9ea;
+  position:sticky;top:0;height:100vh;overflow-y:auto;}
+.brand{padding:22px 20px 14px;border-bottom:1px solid rgba(255,255,255,.08);}
+.brand .k{font-size:11px;letter-spacing:.14em;color:#7fa6da;font-weight:700;}
+.brand .t{font-size:20px;font-weight:800;color:#fff;margin-top:4px;line-height:1.2;}
+.brand .s{font-size:12px;color:#9fb3d1;margin-top:6px;}
+nav ul{list-style:none;margin:0;padding:10px 0 24px;}
+.navlink{display:block;padding:9px 20px;color:#c3d1e6;text-decoration:none;font-size:14px;
+  border-left:3px solid transparent;transition:background .12s,border-color .12s;}
+.navlink:hover{background:var(--sidebar2);}
+.navlink.active{background:var(--sidebar2);border-left-color:var(--blue2);color:#fff;font-weight:700;}
+.navlink.day{font-weight:600;}
+.navlink.day::before{content:"▸ ";color:#6f93c7;}
+.navsep{padding:14px 20px 4px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#6f8cb5;}
+/* content */
+.main{flex:1;min-width:0;}
+.topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;
+  background:var(--bg);border-bottom:1px solid var(--line);padding:10px 24px;}
+.topbar .hamb{display:none;background:none;border:1px solid var(--line);color:var(--text);
+  font-size:18px;border-radius:8px;padding:4px 10px;cursor:pointer;}
+.topbar .crumb{font-size:13px;color:var(--muted);flex:1;}
+.btn{font-size:13px;text-decoration:none;color:#fff;background:var(--blue);
+  padding:7px 12px;border-radius:8px;border:none;cursor:pointer;white-space:nowrap;}
+.btn.ghost{background:transparent;color:var(--blue);border:1px solid var(--blue);}
+.content{max-width:860px;margin:0 auto;padding:26px 28px 60px;}
+.doc-section{display:none;animation:fade .2s ease;}
+.doc-section.active{display:block;}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+h1{font-size:27px;color:var(--navy);border-bottom:2px solid var(--blue);
+  padding-bottom:8px;margin:0 0 16px;}
+h2{font-size:19px;color:var(--blue);margin:26px 0 8px;}
+p{margin:10px 0;}
+ul,ol{margin:10px 0;padding-left:24px;}
+li{margin:5px 0;}
+b{color:var(--navy);}
+code{font-family:Consolas,Menlo,monospace;font-size:13.5px;background:var(--codebg);
+  color:var(--codetx);padding:1px 5px;border-radius:4px;}
+table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14px;}
+th{background:var(--navy);color:#fff;text-align:left;padding:8px 10px;border:1px solid var(--navy);}
+td{border:1px solid var(--line);padding:7px 10px;vertical-align:top;background:var(--card);}
+tr:nth-child(even) td{background:var(--bg2);}
+.box{padding:12px 15px;margin:14px 0;background:#eef4fb;border-left:4px solid var(--blue);border-radius:0 8px 8px 0;}
+.tip{background:var(--greenbg);border-left-color:var(--green);}
+.warn{background:var(--redbg);border-left-color:var(--red);}
+.check-list{background:var(--amberbg);border-left-color:var(--amber);
+  font-family:Consolas,Menlo,monospace;font-size:13.5px;white-space:normal;}
+:root[data-theme="dark"] .box, :root:not([data-theme="light"]) .box{background:#13233c;}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .box{background:#13233c;}}
+.do,.chk{color:#fff;font-weight:700;padding:5px 12px;margin:14px 0 2px;
+  display:inline-block;border-radius:6px;font-size:13px;letter-spacing:.02em;}
+.do{background:var(--green);}
+.chk{background:var(--blue);}
+.file{font-family:Consolas,Menlo,monospace;font-size:13px;color:var(--filetx);
+  background:var(--filebg);padding:2px 6px;border-radius:4px;}
+table.legend th{display:none;}
+.lg{font-weight:700;color:#fff;text-align:center;font-size:12px;width:92px;border-radius:0;}
+.lg.do,.lg.tip{background:var(--green);}
+.lg.chk{background:var(--blue);}
+.lg.warn{background:var(--red);}
+.lg.file{background:var(--filetx);}
+.end{font-style:italic;color:var(--navy);font-weight:700;}
+.pager{display:flex;justify-content:space-between;gap:10px;margin-top:40px;
+  border-top:1px solid var(--line);padding-top:18px;}
+.pager a{text-decoration:none;color:var(--blue);font-size:14px;border:1px solid var(--line);
+  padding:10px 14px;border-radius:8px;max-width:48%;}
+.pager a .lab{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;}
+.pager a.next{text-align:right;margin-left:auto;}
+.pager a.disabled{visibility:hidden;}
+.backdrop{display:none;}
+@media (max-width:860px){
+  .sidebar{position:fixed;left:0;top:0;z-index:40;transform:translateX(-100%);
+    transition:transform .2s;box-shadow:2px 0 20px rgba(0,0,0,.3);}
+  .sidebar.open{transform:none;}
+  .topbar .hamb{display:inline-block;}
+  .backdrop.show{display:block;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:30;}
+  .content{padding:20px 18px 50px;}
+}
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="k">CYBER THREAT MONITORING · LEVEL 1</div>
+      <div class="t">Operation Night Ledger</div>
+      <div class="s">5-day guided blue-team capstone</div>
+    </div>
+    <nav>
+      <div class="navsep">Guide</div>
+      <ul>
+<li><a class="navlink intro" data-id="how" href="#how">How to use this guide</a></li>
+<li><a class="navlink ref" data-id="overview" href="#overview">1. Capstone overview</a></li>
+<li><a class="navlink ref" data-id="scenario" href="#scenario">2. The scenario: Operation Night Ledger</a></li>
+<li><a class="navlink day" data-id="day1" href="#day1">Day 1 - Build the lab</a></li>
+<li><a class="navlink day" data-id="day2" href="#day2">Day 2 - Turn on Windows logging</a></li>
+<li><a class="navlink day" data-id="day3" href="#day3">Day 3 - Send the logs to Wazuh (SIEM)</a></li>
+<li><a class="navlink day" data-id="day4" href="#day4">Day 4 - The incident and your investigation</a></li>
+<li><a class="navlink day" data-id="day5" href="#day5">Day 5 - Report and present</a></li>
+<li><a class="navlink ref" data-id="grading" href="#grading">4. How you are graded</a></li>
+<li><a class="navlink ref" data-id="trouble" href="#trouble">5. Troubleshooting</a></li>
+<li><a class="navlink ref" data-id="glossary" href="#glossary">6. Glossary</a></li>
+<li><a class="navlink ref" data-id="appendix" href="#appendix">7. Appendix - resource index</a></li>
+      </ul>
+    </nav>
+  </aside>
+  <div class="backdrop" id="backdrop"></div>
+
+  <main class="main">
+    <div class="topbar">
+      <button class="hamb" id="hamb" aria-label="Menu">☰</button>
+      <span class="crumb" id="crumb">How to use this guide</span>
+      <button class="btn ghost" id="themeBtn" title="Toggle theme">◐ Theme</button>
+      <a class="btn" href="CAPSTONE_RESOURCES/01_Guide/Capstone_Guide_CTM_L1.pdf">PDF</a>
+    </div>
+    <div class="content">
+<section id="how" class="doc-section"><h1>How to use this guide</h1>
+<p>Welcome to your <b>Cyber Threat Monitoring Level 1 Capstone</b>. Over five days your
+team will build a small security lab, switch on Windows logging, connect it to the
+<b>Wazuh</b> SIEM, investigate a simulated intrusion, and present your findings like a
+real Security Operations Center (SOC).</p>
+
+<p>This is a <b>guided</b> capstone. Follow the days in order. Every step tells you exactly
+what to click or type, and every day ends with a <b>checkpoint</b> you can tick off.</p>
+
+<div class="box tip"><b>One folder for everything.</b> All files you need are in the
+<code>CAPSTONE_RESOURCES</code> folder that came with this guide. Upload that one folder to
+your team's shared drive (Google Drive, OneDrive, or Teams). Nobody needs anything else.</div>
+
+<div class="box warn"><b>Safety first.</b> Run every script and command only
+<b>inside your lab virtual machines</b> - never on your personal or work computer. The
+Day 4 "attack" is a harmless simulation. No real malware is used.</div>
+
+<p><b>Legend used in this guide</b></p>
+<table class="legend">
+<tr><td class="lg do">DO THIS</td><td>A numbered action to perform.</td></tr>
+<tr><td class="lg chk">CHECK</td><td>How to confirm the step worked.</td></tr>
+<tr><td class="lg tip">TIP</td><td>Helpful advice or a shortcut.</td></tr>
+<tr><td class="lg warn">WARNING</td><td>Something that can break your lab - read it.</td></tr>
+<tr><td class="lg file">FILE</td><td>A file to use from CAPSTONE_RESOURCES.</td></tr>
+</table>
+</section>
+<section id="overview" class="doc-section"><h1>1. Capstone overview</h1>
+<h2>What you will build</h2>
+<p>A two-machine lab inside <b>VirtualBox</b>:</p>
+<ul>
+<li><b>CTM-WIN01</b> - a Windows workstation (the "victim"), with Windows auditing,
+<b>Sysmon</b>, and a <b>Wazuh agent</b>.</li>
+<li><b>CTM-Wazuh</b> - the Wazuh all-in-one server (manager + indexer + dashboard),
+which collects and analyses the logs.</li>
+</ul>
+
+<h2>Learning outcomes</h2>
+<p>By the end, every team member can:</p>
+<ul>
+<li>Stand up a monitored Windows endpoint in a virtual lab.</li>
+<li>Enable and read the Windows logs a SOC relies on (Event Viewer).</li>
+<li>Collect endpoint logs centrally in a SIEM and write custom detection rules.</li>
+<li>Triage alerts, confirm them with raw evidence, and build an attack timeline.</li>
+<li>Map activity to <b>MITRE ATT&amp;CK</b> and write an incident report.</li>
+</ul>
+
+<h2>Tools you will use (all free)</h2>
+<table>
+<tr><th>Tool</th><th>Role in the capstone</th></tr>
+<tr><td>Oracle VirtualBox</td><td>Runs the virtual machines</td></tr>
+<tr><td>Windows 11 / Server 2022 (eval)</td><td>The monitored endpoint</td></tr>
+<tr><td>Windows Event Viewer</td><td>Read raw Windows logs (evidence)</td></tr>
+<tr><td>Sysmon (Sysinternals)</td><td>Deep endpoint telemetry</td></tr>
+<tr><td>Wazuh</td><td>SIEM - central collection, rules, dashboard</td></tr>
+<tr><td>MITRE ATT&amp;CK</td><td>Framework to classify attacker behaviour</td></tr>
+</table>
+
+<h2>The five days at a glance</h2>
+<table>
+<tr><th>Day</th><th>Theme</th><th>You finish with</th></tr>
+<tr><td>Day 1</td><td>Build the lab</td><td>Two VMs on one network, snapshots taken</td></tr>
+<tr><td>Day 2</td><td>Windows logging</td><td>Auditing + Sysmon on; Event Viewer views ready</td></tr>
+<tr><td>Day 3</td><td>Wazuh SIEM</td><td>Agent ACTIVE; custom rules; logs flowing</td></tr>
+<tr><td>Day 4</td><td>Attack &amp; investigate</td><td>Triaged alerts; attack timeline; MITRE map</td></tr>
+<tr><td>Day 5</td><td>Report &amp; present</td><td>Incident report + team presentation</td></tr>
+</table>
+
+<h2>Team roles</h2>
+<p>Pick roles on Day 1 and record them in <span class="file">07_Team_Templates /
+01_Team_Charter.docx</span>. Teams of 3 combine roles; everyone investigates on Day 4.</p>
+<table>
+<tr><th>Role</th><th>Owns</th></tr>
+<tr><td>SOC Lead / Incident Commander</td><td>Stand-ups, task assignment, final timeline and decisions</td></tr>
+<tr><td>Lab Engineer (Red Cell)</td><td>Builds and snapshots VMs; runs the Day 4 scenario</td></tr>
+<tr><td>Windows Analyst</td><td>Event Viewer evidence and Windows Event IDs</td></tr>
+<tr><td>Wazuh Analyst</td><td>Dashboard triage, custom rules, MITRE mapping</td></tr>
+<tr><td>Scribe / Report Lead</td><td>Worksheet, incident report, presentation</td></tr>
+</table>
+</section>
+<section id="scenario" class="doc-section"><h1>2. The scenario: Operation Night Ledger</h1>
+<p><b>BlueHarbor Finance</b> is a small (fictional) accounting firm. Your team is its SOC.</p>
+<div class="box">At 07:45 this morning the Finance Manager reported that the file
+<code>Vendor_Bank_Details.csv</code> is missing from the shared finance workstation, and
+that "the computer felt slow last night." Helpdesk staff member <b>Jamie Santos
+(j.santos)</b> says they did not log in yesterday evening.</div>
+<p><b>Management wants answers:</b> Did someone break in, and how? What did they do? Was data
+taken or changed? Can they get back in? What must we fix? You will answer these on Days 4-5.</p>
+<p>Read the full brief in <span class="file">05_Attack_Simulation / Scenario_Brief.md</span>.</p>
+</section>
+<section id="day1" class="doc-section"><h1>Day 1 - Build the lab</h1>
+<p><b>Goal:</b> two virtual machines running and able to talk to each other on a private
+network. <b>Checkpoint:</b> you can ping between the VMs and open the Wazuh dashboard.</p>
+
+<h2>1.1 Download everything (do this first)</h2>
+<div class="lg file">FILE</div>
+<p><span class="file">02_Lab_Setup / Download_Links.md</span> has every link. Downloads total
+about 12 GB, so start them before anything else.</p>
+<p class="do">DO THIS</p>
+<ol>
+<li>Download and install <b>VirtualBox 7.x</b> for your computer.</li>
+<li>Download the <b>Wazuh OVA</b> (the ready-made SIEM virtual machine, ~5 GB).</li>
+<li>Download a <b>Windows ISO</b>: Windows 11 Enterprise Evaluation (90 days). If your PC
+cannot run Windows 11, use Windows Server 2022 Evaluation instead.</li>
+</ol>
+<div class="box tip">While downloads run, read <span class="file">02_Lab_Setup /
+Lab_Network_Plan.md</span> and fill in the VM specs in your Team Charter.</div>
+
+<h2>1.2 Check your computer can run VMs</h2>
+<p class="do">DO THIS</p>
+<ol>
+<li>Reboot into your PC's BIOS/UEFI and make sure <b>virtualization</b>
+(Intel VT-x / AMD-V) is <b>enabled</b>. Without it, 64-bit VMs will not start.</li>
+<li>Make sure you have at least <b>8 GB RAM</b> and <b>100 GB free disk</b>.</li>
+</ol>
+<div class="box warn">If a member's laptop is too small, the team uses <b>one</b> strong PC as the
+"primary lab" and shares its screen during team calls. Decide this today.</div>
+
+<h2>1.3 Import the Wazuh server VM</h2>
+<p class="do">DO THIS</p>
+<ol>
+<li>VirtualBox menu: <b>File &gt; Import Appliance</b>. Choose the Wazuh <code>.ova</code>.</li>
+<li>Set RAM to <b>4096 MB</b> (8192 if you can), 2-4 CPUs. Name it <b>CTM-Wazuh</b>. Click Import.</li>
+<li>Start the VM. At the login prompt sign in with <b>wazuh-user / wazuh</b>.</li>
+<li>Type <code>ip -4 addr</code> and note the address (you will set this up in step 1.5).</li>
+</ol>
+
+<h2>1.4 Create the Windows endpoint VM</h2>
+<p class="do">DO THIS</p>
+<ol>
+<li><b>Machine &gt; New</b>. Name <b>CTM-WIN01</b>, Type Microsoft Windows, Version
+<b>Windows 11 (64-bit)</b>. VirtualBox 7 enables EFI, Secure Boot and TPM for you.</li>
+<li>RAM <b>4096 MB</b>, CPUs <b>2</b>, disk <b>64 GB</b>. Attach the Windows ISO.</li>
+<li>Install Windows. Create a local admin user named <b>ctmadmin</b> with a password you
+choose (write it in your Team Charter). Set the computer name to <b>WIN-CTM-01</b>.</li>
+</ol>
+<div class="box tip">To skip the "Microsoft account" requirement during Windows 11 setup, choose
+the <b>Windows Server</b> option instead, or select a limited-setup/"domain join" path when
+offered. A local account is all the lab needs.</div>
+
+<h2>1.5 Put both VMs on one private network</h2>
+<p>You need a <b>Host-only</b> network so the two VMs can talk privately, plus <b>NAT</b> so
+each can reach the internet for updates.</p>
+<p class="do">DO THIS</p>
+<ol>
+<li>VirtualBox: <b>Tools &gt; Network &gt; Host-only Networks &gt; Create</b>. Leave the
+default <code>192.168.56.0/24</code> with DHCP enabled.</li>
+<li>For <b>each</b> VM: <b>Settings &gt; Network</b>. Adapter 1 = <b>NAT</b>.
+Adapter 2 = <b>Host-only Adapter</b> (select the one you just created). Enable both.</li>
+<li>Start both VMs. Find each host-only IP (starts with 192.168.56): on Wazuh type
+<code>ip -4 addr</code>; on Windows open Command Prompt and type <code>ipconfig</code>.</li>
+<li>Record both IPs in your Team Charter.</li>
+</ol>
+<p class="chk">CHECK</p>
+<ol>
+<li>From the Windows VM, open a browser and go to <code>https://&lt;WAZUH-IP&gt;</code>.
+Accept the certificate warning. Log in with <b>admin / admin</b>. You should see the Wazuh
+dashboard. In the dashboard menu, open <b>About</b> and record the <b>Wazuh version</b> -
+you need it on Day 3.</li>
+</ol>
+
+<h2>1.6 Take your first snapshots</h2>
+<div class="box warn">Snapshots are your safety net. If anything breaks later, you roll back
+in seconds instead of rebuilding.</div>
+<p class="do">DO THIS</p>
+<ol>
+<li>For each VM: VirtualBox <b>&gt; (select VM) &gt; Snapshots &gt; Take</b>.</li>
+<li>Name them <b>Day1-Clean-Build</b>.</li>
+</ol>
+
+<div class="box check-list"><b>Day 1 checkpoint - all must be true</b><br>
+[ ] VirtualBox installed, virtualization enabled<br>
+[ ] CTM-Wazuh and CTM-WIN01 both boot<br>
+[ ] Both VMs have a 192.168.56.x address<br>
+[ ] Wazuh dashboard opens from the Windows VM; version recorded<br>
+[ ] "Day1-Clean-Build" snapshot taken on both VMs<br>
+[ ] Team Charter filled in (roles, IPs, version)</div>
+</section>
+<section id="day2" class="doc-section"><h1>Day 2 - Turn on Windows logging</h1>
+<p><b>Goal:</b> make the Windows endpoint record the security events a SOC needs.
+<b>Checkpoint:</b> <code>Preflight_Check.ps1</code> shows the logging items as PASS.</p>
+
+<div class="box tip"><b>Running the scripts.</b> All Day 2-4 scripts run inside the Windows VM.
+Right-click <b>Windows PowerShell &gt; Run as administrator</b>. If scripts are blocked, run
+this once in that same window:<br>
+<code>Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass</code><br>
+Then run a script with <code>.\ScriptName.ps1</code>. Copy the CAPSTONE_RESOURCES folder into
+the VM first (shared folder, or just download it from your shared drive inside the VM).</div>
+
+<h2>2.1 Create the company environment</h2>
+<div class="lg file">FILE</div>
+<p><span class="file">03_Windows_Logging / Seed_Lab_Environment.ps1</span></p>
+<p>This creates three staff accounts (<b>j.santos</b>, <b>m.reyes</b>, <b>a.cruz</b>) and the
+<code>C:\CapstoneFinance</code> folder with sample business files. Note: j.santos is given a
+deliberately <b>weak password</b> - that is part of the story.</p>
+<p class="do">DO THIS - run it, then confirm the users appear with <code>Get-LocalUser</code>.</p>
+
+<h2>2.2 Enable Windows audit logging</h2>
+<div class="lg file">FILE</div>
+<p><span class="file">03_Windows_Logging / Enable_Audit_Logging.ps1</span></p>
+<p>This turns on auditing for logons, account changes, process creation and more; adds the
+<b>command line</b> to process events; enables <b>PowerShell script block logging</b>; and
+makes the logs bigger so evidence is not overwritten.</p>
+<p class="do">DO THIS - run it. It prints the audit policy at the end; screenshot that.</p>
+<div class="box">After this runs, these events start recording: 4624/4625 (logon
+success/failure), 4720/4732 (account created / added to group), 4688 (process with command
+line), 4698 (scheduled task), 4104 (PowerShell code). See the cheat sheet below.</div>
+
+<h2>2.3 Install Sysmon</h2>
+<div class="lg file">FILE</div>
+<p><span class="file">03_Windows_Logging / Install_Sysmon.ps1</span> and
+<span class="file">sysmon-capstone.xml</span></p>
+<p>Sysmon adds deep detail: every process (with hashes and parent), network connections,
+file creation/deletion, registry autostart changes and DNS queries. The script downloads
+Sysmon from Microsoft and installs it with our tuned configuration.</p>
+<p class="do">DO THIS - run it.</p>
+<p class="chk">CHECK - open <b>Event Viewer &gt; Applications and Services Logs &gt; Microsoft
+&gt; Windows &gt; Sysmon &gt; Operational</b>. You should see events appearing.</p>
+
+<h2>2.4 Import the ready-made Event Viewer views</h2>
+<div class="lg file">FILE</div>
+<p><span class="file">03_Windows_Logging / EventViewer_Custom_Views\</span> (four XML files)</p>
+<p>These give you one-click filtered views instead of scrolling through thousands of events.</p>
+<p class="do">DO THIS</p>
+<ol>
+<li>Open <b>Event Viewer</b> (press Start, type <code>eventvwr.msc</code>).</li>
+<li>Right-click <b>Custom Views &gt; Import Custom View...</b></li>
+<li>Import each of the four files:
+<b>CV1 Authentication</b>, <b>CV2 Account Changes</b>,
+<b>CV3 Persistence and Execution</b>, <b>CV4 PowerShell and Defender</b>.</li>
+</ol>
+
+<h2>2.5 Learn the key Event IDs</h2>
+<p>Keep <span class="file">03_Windows_Logging / Windows_Event_ID_Cheat_Sheet.md</span> open
+while you work. The essentials:</p>
+<table>
+<tr><th>Event ID</th><th>Meaning</th><th>Why it matters</th></tr>
+<tr><td>4625</td><td>Failed logon</td><td>Password guessing / brute force</td></tr>
+<tr><td>4624</td><td>Successful logon</td><td>Who got in, and how (Logon Type)</td></tr>
+<tr><td>4720</td><td>User account created</td><td>Attacker making a backdoor account</td></tr>
+<tr><td>4732</td><td>Added to a local group</td><td>Privilege escalation (e.g. Administrators)</td></tr>
+<tr><td>4688</td><td>New process</td><td>What was run (with command line)</td></tr>
+<tr><td>4698</td><td>Scheduled task created</td><td>Persistence</td></tr>
+<tr><td>4104</td><td>PowerShell script block</td><td>Shows the actual code - even decoded</td></tr>
+<tr><td>1102</td><td>Security log cleared</td><td>Always suspicious</td></tr>
+</table>
+
+<div class="box check-list"><b>Day 2 checkpoint</b><br>
+[ ] Seed users and C:\CapstoneFinance created<br>
+[ ] Audit logging enabled (screenshot of auditpol output)<br>
+[ ] Sysmon service running and logging events<br>
+[ ] Four custom views imported into Event Viewer<br>
+[ ] Preflight_Check.ps1 shows logging items PASS<br>
+[ ] Snapshot taken: "Day2-Logging-On"</div>
+</section>
+<section id="day3" class="doc-section"><h1>Day 3 - Send the logs to Wazuh (SIEM)</h1>
+<p><b>Goal:</b> the Windows endpoint ships its logs to Wazuh, and your custom rules raise
+alerts. <b>Checkpoint:</b> the agent shows <b>ACTIVE</b> and your test events create alerts.</p>
+
+<h2>3.1 Install the Wazuh agent on Windows</h2>
+<div class="lg file">FILE</div>
+<p><span class="file">04_Wazuh / Install_Wazuh_Agent.ps1</span></p>
+<p>This installs the agent, points it at your Wazuh server, and adds the extra log sources
+(Sysmon, PowerShell, Defender) plus <b>File Integrity Monitoring</b> on the finance folder.</p>
+<div class="box warn">The agent version must be the <b>same or older</b> than your Wazuh server
+version (the one you recorded on Day 1). Pass it with <code>-Version</code>.</div>
+<p class="do">DO THIS - in the Windows VM, run (use your own IP and version):</p>
+<p><code>.\Install_Wazuh_Agent.ps1 -WazuhIP 192.168.56.101 -Version 4.9.2</code></p>
+<p class="chk">CHECK</p>
+<ol>
+<li>The script prints the agent log; look for <b>"Connected to the server"</b>.</li>
+<li>In the Wazuh dashboard open <b>Agents</b>. <b>WIN-CTM-01</b> should be <b>ACTIVE</b> (green).</li>
+</ol>
+<div class="box tip">If the agent is not active: check the IP, confirm both VMs are on the
+host-only network, and that ports 1514/1515 are reachable (run
+<code>Preflight_Check.ps1 -WazuhIP &lt;ip&gt;</code>). See Troubleshooting.</div>
+
+<h2>3.2 Add the custom detection rules</h2>
+<div class="lg file">FILE</div>
+<p><span class="file">04_Wazuh / local_rules.xml</span></p>
+<p>These rules (IDs 100200-100210) are the brain of your SOC. They turn raw events into
+meaningful alerts: brute force, new admin accounts, scheduled tasks, encoded PowerShell,
+registry persistence, finance-file tampering, and Defender detections - each mapped to MITRE.</p>
+<p class="do">DO THIS</p>
+<ol>
+<li>In the dashboard: <b>menu &gt; Server management &gt; Rules</b>.</li>
+<li>Click <b>Manage rules files</b>, then <b>Custom rules</b>, and edit
+<b>local_rules.xml</b>.</li>
+<li>Keep anything already there. Paste the contents of our <code>local_rules.xml</code>
+below it. Click <b>Save</b>.</li>
+<li>When prompted, <b>Restart</b> the manager (or on the server console run
+<code>sudo systemctl restart wazuh-manager</code>).</li>
+</ol>
+<div class="box tip">Alternative on the server console:
+edit <code>/var/ossec/etc/rules/local_rules.xml</code>, then restart the manager. After a
+restart, check <code>sudo tail -n 50 /var/ossec/logs/ossec.log</code> for rule errors.</div>
+
+<h2>3.3 Prove it works (smoke test)</h2>
+<p class="do">DO THIS - in the Windows VM, generate a couple of safe test events:</p>
+<ol>
+<li>Fail a logon on purpose a few times: open PowerShell and run<br>
+<code>runas /user:WIN-CTM-01\j.santos cmd</code> and type a wrong password 3-4 times.</li>
+<li>Create and remove a test file in the watched folder:<br>
+<code>"test" | Out-File C:\CapstoneFinance\test.txt ; Remove-Item C:\CapstoneFinance\test.txt</code></li>
+</ol>
+<p class="chk">CHECK - in the dashboard go to <b>Threat Hunting</b> (or Discover) and search
+<code>rule.groups:"ctm_capstone"</code>. You should see your alerts. Use the queries in
+<span class="file">04_Wazuh / Wazuh_Dashboard_Queries.md</span>.</p>
+
+<div class="box check-list"><b>Day 3 checkpoint</b><br>
+[ ] Wazuh agent ACTIVE in the dashboard<br>
+[ ] Sysmon / PowerShell / Defender channels + FIM configured<br>
+[ ] Custom rules loaded; manager restarted without errors<br>
+[ ] Smoke-test alerts visible under rule.groups:"ctm_capstone"<br>
+[ ] Snapshot taken on both VMs: "Day3-Wazuh-Ready"</div>
+</section>
+<section id="day4" class="doc-section"><h1>Day 4 - The incident and your investigation</h1>
+<p><b>Goal:</b> detect, investigate and document the intrusion. <b>Checkpoint:</b> a complete
+attack timeline and all alerts triaged.</p>
+
+<h2>4.1 Run the scenario (Red Cell only)</h2>
+<div class="lg file">FILE</div>
+<p><span class="file">05_Attack_Simulation / Run_Scenario.ps1</span></p>
+<div class="box warn">Only the <b>Lab Engineer (Red Cell)</b> or the instructor runs this,
+inside the Windows VM, as Administrator. They do <b>not</b> read the script or share its
+output. Everyone else investigates blind, like a real SOC. First take a snapshot named
+<b>Day4-Before-Attack</b>.</div>
+<p class="do">DO THIS (Red Cell): <code>.\Run_Scenario.ps1</code> - it takes about 6 minutes
+and prints only "Stage X of 8 complete". Then wait 2-3 minutes for Wazuh to index events.</p>
+
+<div class="box"><b>Plan B.</b> If your live lab is broken (agent never connected, a VM died),
+use <span class="file">06_Backup_Dataset\</span> instead. It contains the exact same incident
+as CSV and JSON files you can open in Excel and a text editor. Your investigation and report
+are identical.</div>
+
+<h2>4.2 How to investigate (the SOC method)</h2>
+<p>Work this loop for every alert. Record everything in
+<span class="file">07_Team_Templates / 03_Alert_Triage_Tracker.xlsx</span> and
+<span class="file">04_Investigation_Worksheet.docx</span>.</p>
+<ol>
+<li><b>Spot</b> - in Wazuh, search <code>rule.groups:"ctm_capstone"</code> and sort by time.</li>
+<li><b>Understand</b> - open the alert; read rule.description, rule.level, MITRE ID, and the
+event fields (account, command line, file).</li>
+<li><b>Confirm</b> - find the <b>same event in Event Viewer</b> using your custom views. This
+raw evidence is what goes in the report.</li>
+<li><b>Record</b> - add a row to the triage tracker: time, rule.id, Event ID, true/false
+positive, severity, MITRE, screenshot name.</li>
+<li><b>Connect</b> - place it on the timeline. Ask: what came before, what came after?</li>
+</ol>
+<div class="box tip">Take a screenshot of <b>every</b> confirmed alert (both the Wazuh view and
+the Event Viewer entry). Name them like <code>T03_4720_new_user.png</code>. Screenshots are
+your evidence and your presentation material.</div>
+
+<h2>4.3 What to look for (without spoiling it)</h2>
+<p>The intrusion moves through these ATT&amp;CK stages. Find the evidence for each:</p>
+<table>
+<tr><th>Stage</th><th>Question to answer</th><th>Where to look</th></tr>
+<tr><td>Initial Access</td><td>How did they get in? Whose account?</td><td>4625, 4624; rule 100201</td></tr>
+<tr><td>Discovery</td><td>What did they look at?</td><td>Sysmon 1 / 4688; rule 100206</td></tr>
+<tr><td>Privilege / Persistence</td><td>New account? Auto-start? Task?</td><td>4720, 4732, 4698, Sysmon 13; rules 100202-100207</td></tr>
+<tr><td>Execution</td><td>What code ran, and was it hidden?</td><td>4104, Sysmon 1; rule 100205</td></tr>
+<tr><td>Collection / Exfil</td><td>What data was staged, changed, deleted, sent out?</td><td>FIM, Sysmon 11/22/3/26; rules 100208/100210</td></tr>
+<tr><td>Tooling</td><td>Did AV catch anything?</td><td>Defender 1116/1117; rule 100209</td></tr>
+</table>
+<p>Answer the 15 questions in the Investigation Worksheet. Decode the encoded PowerShell with
+<b>CyberChef</b> (From Base64) or by reading Event <b>4104</b>, which logs the decoded code.</p>
+
+<div class="box check-list"><b>Day 4 checkpoint</b><br>
+[ ] Every ctm_capstone alert triaged in the tracker<br>
+[ ] Each confirmed with an Event Viewer screenshot<br>
+[ ] All 15 worksheet questions answered with evidence<br>
+[ ] Attack timeline drafted (minute by minute)<br>
+[ ] Each stage mapped to MITRE ATT&amp;CK</div>
+</section>
+<section id="day5" class="doc-section"><h1>Day 5 - Report and present</h1>
+<p><b>Goal:</b> deliver a professional incident report and a team presentation.
+<b>Checkpoint:</b> both complete and saved in the shared folder.</p>
+
+<h2>5.1 Write the incident report</h2>
+<div class="lg file">FILE</div>
+<p><span class="file">07_Team_Templates / 05_Incident_Report_Template.docx</span></p>
+<p>Fill every section. The executive summary must be readable by a non-technical manager. Your
+timeline and MITRE map come straight from Day 4. End with a clear <b>root cause</b> (hint: how
+strong was j.santos's password, and what rights did the account have?) and at least <b>five
+prioritised recommendations</b>.</p>
+
+<h2>5.2 Clean up and recover</h2>
+<div class="lg file">FILE</div>
+<p><span class="file">05_Attack_Simulation / Cleanup_Scenario.ps1</span></p>
+<p>After all evidence is collected, the Red Cell runs this to remove the backdoor account,
+scheduled task, Run key and dropped files, and to restore the finance data. In your report,
+describe this as your <b>containment, eradication and recovery</b>. (A real team would also
+reset the weak password and remove unnecessary admin rights - list that too.)</p>
+
+<h2>5.3 Build the presentation</h2>
+<div class="lg file">FILE</div>
+<p><span class="file">07_Team_Templates / 06_Final_Presentation_Outline.docx</span></p>
+<p>10-12 minutes, <b>every member speaks</b>. Lead with the story (the timeline slide is your
+strongest). Show the live Wazuh dashboard or your screenshots.</p>
+
+<h2>5.4 Peer evaluation</h2>
+<p>Each member completes <span class="file">08_Assessment / Peer_Evaluation_Form.docx</span>
+and submits it privately to the instructor.</p>
+
+<div class="box check-list"><b>Day 5 checkpoint (final hand-in)</b><br>
+[ ] Incident report complete<br>
+[ ] Presentation delivered; every member spoke<br>
+[ ] Triage tracker, worksheet, charter, stand-up log saved<br>
+[ ] Lab cleaned up / recovered; final snapshot taken<br>
+[ ] Peer evaluations submitted</div>
+</section>
+<section id="grading" class="doc-section"><h1>4. How you are graded</h1>
+<p>See <span class="file">08_Assessment / Grading_Rubric.xlsx</span> for the full breakdown
+(100 points). Headline weights:</p>
+<table>
+<tr><th>Area</th><th>Weight</th></tr>
+<tr><td>Lab build &amp; logging (Days 1-2)</td><td>15</td></tr>
+<tr><td>Wazuh integration (Day 3)</td><td>15</td></tr>
+<tr><td>Detection quality</td><td>10</td></tr>
+<tr><td>Investigation &amp; triage (Day 4)</td><td>20</td></tr>
+<tr><td>Timeline &amp; MITRE mapping</td><td>10</td></tr>
+<tr><td>Incident report</td><td>15</td></tr>
+<tr><td>Final presentation</td><td>10</td></tr>
+<tr><td>Teamwork &amp; documentation</td><td>5</td></tr>
+</table>
+</section>
+<section id="trouble" class="doc-section"><h1>5. Troubleshooting</h1>
+<table>
+<tr><th>Problem</th><th>Try this</th></tr>
+<tr><td>VM won't start / 64-bit greyed out</td><td>Enable Intel VT-x / AMD-V in BIOS. Disable
+Hyper-V on the host if it conflicts.</td></tr>
+<tr><td>VMs can't reach each other</td><td>Both need Adapter 2 = the <b>same</b> Host-only
+Adapter. Check IPs are both 192.168.56.x.</td></tr>
+<tr><td>Scripts are blocked</td><td>Run <code>Set-ExecutionPolicy -Scope Process
+-ExecutionPolicy Bypass</code> in that PowerShell window, as Administrator.</td></tr>
+<tr><td>Wazuh agent not ACTIVE</td><td>Run <code>Preflight_Check.ps1 -WazuhIP &lt;ip&gt;</code>.
+Confirm ports 1514/1515 reachable; restart <code>WazuhSvc</code>; read
+<code>ossec.log</code>.</td></tr>
+<tr><td>Agent version error</td><td>Agent version must be &lt;= server version. Reinstall with
+the right <code>-Version</code>.</td></tr>
+<tr><td>Custom rules not firing</td><td>Restart the manager. Check
+<code>/var/ossec/logs/ossec.log</code> for XML errors. Test with
+<code>wazuh-logtest</code>.</td></tr>
+<tr><td>No Sysmon events</td><td>Confirm the <b>Sysmon64</b> service is running; re-run
+<code>Install_Sysmon.ps1</code>.</td></tr>
+<tr><td>Dashboard won't load</td><td>Give the Wazuh VM more RAM (8 GB). Wait 2-3 minutes after
+boot. Use <code>https://</code> and accept the certificate.</td></tr>
+<tr><td>Live lab broke on Day 4</td><td>Switch to <span class="file">06_Backup_Dataset</span>
+and continue the investigation from the files.</td></tr>
+</table>
+<p>Still stuck after 15 minutes? Post in your team channel with a screenshot of the error and
+what you already tried.</p>
+</section>
+<section id="glossary" class="doc-section"><h1>6. Glossary</h1>
+<table>
+<tr><th>Term</th><th>Plain meaning</th></tr>
+<tr><td>SIEM</td><td>Security Information and Event Management - software that collects logs and raises alerts (Wazuh).</td></tr>
+<tr><td>SOC</td><td>Security Operations Center - the team that watches for and responds to attacks (you).</td></tr>
+<tr><td>Agent</td><td>Small program on a computer that sends its logs to the SIEM.</td></tr>
+<tr><td>Sysmon</td><td>Microsoft tool that records detailed endpoint activity.</td></tr>
+<tr><td>Event ID</td><td>A number Windows uses to label a type of event (e.g. 4625 = failed logon).</td></tr>
+<tr><td>FIM</td><td>File Integrity Monitoring - alerts when watched files change.</td></tr>
+<tr><td>Triage</td><td>Quickly deciding if an alert is real and how urgent it is.</td></tr>
+<tr><td>True/False positive</td><td>A real detection vs. a harmless one.</td></tr>
+<tr><td>Persistence</td><td>Techniques that let an attacker regain access after a reboot.</td></tr>
+<tr><td>MITRE ATT&amp;CK</td><td>A public catalogue of attacker techniques, each with an ID like T1110.</td></tr>
+<tr><td>Snapshot</td><td>A saved state of a VM you can instantly roll back to.</td></tr>
+</table>
+</section>
+<section id="appendix" class="doc-section"><h1>7. Appendix - resource index</h1>
+<p>Everything below is in the single <b>CAPSTONE_RESOURCES</b> folder.</p>
+<table>
+<tr><th>Folder</th><th>Used on</th><th>Contents</th></tr>
+<tr><td>01_Guide</td><td>All</td><td>This guide (PDF)</td></tr>
+<tr><td>02_Lab_Setup</td><td>Day 1</td><td>Download links, network plan, Preflight_Check.ps1</td></tr>
+<tr><td>03_Windows_Logging</td><td>Day 2</td><td>Seed, audit, Sysmon scripts + config, custom views, cheat sheet</td></tr>
+<tr><td>04_Wazuh</td><td>Day 3</td><td>Agent installer, ossec additions, local_rules.xml, dashboard queries</td></tr>
+<tr><td>05_Attack_Simulation</td><td>Day 4</td><td>Scenario brief, Run_Scenario.ps1, Cleanup_Scenario.ps1</td></tr>
+<tr><td>06_Backup_Dataset</td><td>Day 4 (Plan B)</td><td>Security/Sysmon CSV, Wazuh alerts JSON</td></tr>
+<tr><td>07_Team_Templates</td><td>All</td><td>Charter, stand-ups, triage tracker, worksheet, report, presentation</td></tr>
+<tr><td>08_Assessment</td><td>Day 5</td><td>Grading rubric, peer evaluation</td></tr>
+</table>
+<p class="end">End of guide - good luck, SOC team. Work the evidence, trust the timeline,
+and tell the story.</p>
+</section>
+      <div class="pager">
+        <a class="prev" id="prevBtn" href="#"><span class="lab">Previous</span><span class="ttl"></span></a>
+        <a class="next" id="nextBtn" href="#"><span class="lab">Next</span><span class="ttl"></span></a>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+var IDS=["how","overview","scenario","day1","day2","day3","day4","day5","grading","trouble","glossary","appendix"];
+var TITLES={};
+document.querySelectorAll(".navlink").forEach(function(a){TITLES[a.dataset.id]=a.textContent;});
+var sidebar=document.getElementById("sidebar");
+var backdrop=document.getElementById("backdrop");
+
+function closeNav(){sidebar.classList.remove("open");backdrop.classList.remove("show");}
+function show(id){
+  if(IDS.indexOf(id)<0){id=IDS[0];}
+  document.querySelectorAll(".doc-section").forEach(function(s){s.classList.toggle("active",s.id===id);});
+  document.querySelectorAll(".navlink").forEach(function(a){a.classList.toggle("active",a.dataset.id===id);});
+  document.getElementById("crumb").textContent=TITLES[id]||"";
+  var i=IDS.indexOf(id);
+  var prev=document.getElementById("prevBtn"), next=document.getElementById("nextBtn");
+  if(i>0){prev.classList.remove("disabled");prev.href="#"+IDS[i-1];prev.querySelector(".ttl").textContent=TITLES[IDS[i-1]];}
+  else{prev.classList.add("disabled");}
+  if(i<IDS.length-1){next.classList.remove("disabled");next.href="#"+IDS[i+1];next.querySelector(".ttl").textContent=TITLES[IDS[i+1]];}
+  else{next.classList.add("disabled");}
+  window.scrollTo(0,0);
+  var main=document.querySelector(".main"); if(main){main.scrollTop=0;}
+  closeNav();
+}
+window.addEventListener("hashchange",function(){show(location.hash.replace("#",""));});
+document.getElementById("hamb").addEventListener("click",function(){
+  sidebar.classList.toggle("open");backdrop.classList.toggle("show");});
+backdrop.addEventListener("click",closeNav);
+
+// theme toggle (persists per browser)
+var root=document.documentElement;
+try{var saved=localStorage.getItem("ctm-theme"); if(saved){root.setAttribute("data-theme",saved);}}catch(e){}
+document.getElementById("themeBtn").addEventListener("click",function(){
+  var cur=root.getAttribute("data-theme");
+  var mql=window.matchMedia("(prefers-color-scheme: dark)");
+  var isDark=cur==="dark"||(cur!=="light"&&mql.matches);
+  var nxt=isDark?"light":"dark";
+  root.setAttribute("data-theme",nxt);
+  try{localStorage.setItem("ctm-theme",nxt);}catch(e){}
+});
+
+show(location.hash.replace("#","")||IDS[0]);
+</script>
+</body>
+</html>

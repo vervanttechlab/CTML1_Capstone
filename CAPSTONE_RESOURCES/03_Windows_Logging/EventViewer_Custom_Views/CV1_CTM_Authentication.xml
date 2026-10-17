@@ -1,0 +1,14 @@
+<ViewerConfig>
+  <QueryConfig>
+    <QueryParams>
+      <UserQuery />
+    </QueryParams>
+    <QueryNode>
+      <Name>CTM - 1 Authentication</Name>
+      <Description>Logon success/failure, explicit credentials, admin logons (4624, 4625, 4634, 4648, 4672, 4776)</Description>
+      <QueryList>
+        <Query Id="0" Path="Security"><Select Path="Security">*[System[(EventID=4624 or EventID=4625 or EventID=4634 or EventID=4648 or EventID=4672 or EventID=4776)]]</Select></Query>
+      </QueryList>
+    </QueryNode>
+  </QueryConfig>
+</ViewerConfig>

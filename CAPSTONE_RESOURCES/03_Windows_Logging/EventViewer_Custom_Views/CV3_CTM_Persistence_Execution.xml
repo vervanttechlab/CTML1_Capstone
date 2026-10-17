@@ -1,0 +1,16 @@
+<ViewerConfig>
+  <QueryConfig>
+    <QueryParams>
+      <UserQuery />
+    </QueryParams>
+    <QueryNode>
+      <Name>CTM - 3 Persistence and Execution</Name>
+      <Description>Scheduled tasks (4698), new services (7045), process creation (4688), Sysmon process/registry/file events</Description>
+      <QueryList>
+        <Query Id="0" Path="Security"><Select Path="Security">*[System[(EventID=4688 or EventID=4698 or EventID=4719)]]</Select></Query>
+        <Query Id="1" Path="System"><Select Path="System">*[System[(EventID=7045)]]</Select></Query>
+        <Query Id="2" Path="Microsoft-Windows-Sysmon/Operational"><Select Path="Microsoft-Windows-Sysmon/Operational">*[System[(EventID=1 or EventID=3 or EventID=11 or EventID=13 or EventID=22 or EventID=26)]]</Select></Query>
+      </QueryList>
+    </QueryNode>
+  </QueryConfig>
+</ViewerConfig>

@@ -1,0 +1,14 @@
+<ViewerConfig>
+  <QueryConfig>
+    <QueryParams>
+      <UserQuery />
+    </QueryParams>
+    <QueryNode>
+      <Name>CTM - 2 Account and Group Changes</Name>
+      <Description>Accounts created/enabled/reset/deleted and group membership changes (4720-4726, 4732, 4733)</Description>
+      <QueryList>
+        <Query Id="0" Path="Security"><Select Path="Security">*[System[(EventID=4720 or EventID=4722 or EventID=4723 or EventID=4724 or EventID=4725 or EventID=4726 or EventID=4732 or EventID=4733)]]</Select></Query>
+      </QueryList>
+    </QueryNode>
+  </QueryConfig>
+</ViewerConfig>
