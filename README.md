@@ -17,6 +17,23 @@ builds a small monitored Windows lab, connects it to the **Wazuh** SIEM, investi
 - **Printable guide:** [`CAPSTONE_RESOURCES/01_Guide/Capstone_Guide_CTM_L1.pdf`](CAPSTONE_RESOURCES/01_Guide/Capstone_Guide_CTM_L1.pdf)
 - **Quick start:** [`CAPSTONE_RESOURCES/00_START_HERE.md`](CAPSTONE_RESOURCES/00_START_HERE.md)
 
+## 🎬 Supplemental videos
+
+### **Step-by-step walkthrough videos → <https://drive.google.com/drive/folders/1Xr2BUiugSwVs6xdojCpizw1ZCwUFBx-7?usp=sharing>**
+
+Short narrated, captioned screen recordings that follow the guide. Watch them alongside the
+guide when you get stuck, or before you start a day. They are organized in one folder per day:
+
+| Folder | Day | Covers |
+|---|---|---|
+| `Day1_02_Lab_Setup` | 1 | Importing the Wazuh server VM, network setup, first snapshot |
+| `Day2_03_Windows_Logging` | 2 | Seeding the environment, audit logging, Sysmon, Event Viewer custom views |
+| `Day3_04_Wazuh` | 3 | Installing the agent, confirming it is Active, custom rules, smoke test, checkpoint snapshot, preflight check |
+| `Day4_05_Attack_Simulation` | 4 | Running the scenario and confirming the evidence |
+
+> The videos support the written guide; they do not replace it. If a video and the guide ever
+> differ, follow the guide.
+
 ## 🗂️ What's inside — `CAPSTONE_RESOURCES/`
 
 | Folder | Day | Contents |
@@ -40,6 +57,8 @@ builds a small monitored Windows lab, connects it to the **Wazuh** SIEM, investi
 3. **Wazuh SIEM** — agent ACTIVE, custom detection rules, logs flowing.
 4. **Attack & investigate** — triage alerts, confirm in Event Viewer, build the timeline.
 5. **Report & present** — incident report and team presentation.
+
+Need a visual walkthrough? See the [supplemental videos](#-supplemental-videos).
 
 ## 🚀 Enable GitHub Pages
 Repository **Settings → Pages → Build and deployment → Source: Deploy from a branch**,
